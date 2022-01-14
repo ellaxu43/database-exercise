@@ -1,3 +1,56 @@
+##CASE lesson
+USE numbers;
+
+SELECT * FROM numbers;
+SELECT 
+   n, 
+     n % 2, 
+     	n % 2 = 0,
+   IF(n, 'small', 'large') AS number_description
+ FROM numbers;
+
+
+SELECT 
+	n as number,
+	CASE 
+		WHEN n < 4 THEN 'small'
+		WHEN n < 8 THEN 'medium'
+		ELSE 'large'
+	END AS number_descrption
+FROM numbers;
+
+SELECT n, 
+	CASE n
+		WHEN 4 THEN 'four'
+		WHEN 5 THEN 'five'
+		ELSE CONCAT('the number is ', n)
+	END AS number_description 	
+FROM numbers;
+
+
+
+SELECT * FROM fruits;
+
+SELECT 
+ 	name, 
+ 	IF(
+ 	quantity > 0,
+ 	CONCAT('we have ', quantity, ' ', name, 's'),
+ 	'OUT OF STOCK'
+ 	)
+ 	 as message;
+ 	 
+ 	 
+ SELECT 
+     d.dept_name,
+     	SUM(IF(e.gender = 'F', 1, 0)) AS 'F',
+     	SUM(IF(e.gender = 'M', 1,1)) AS 'M'
+FROM employees e 
+JOIN dept_manager dm USING (emp_no)
+JOIN departments d USING (dept_no)
+GROUP by d.dept_name;
+
+
 USE employees;
 
 SELECT dept_name,
@@ -31,17 +84,18 @@ FROM departments;
 
 #Write a query that returns all employees (emp_no), their department number, their start date, their end date, and a new column 'is_current_employee' that is a 1 if the employee is still with the company and 0 if not.
 
-SELECT emp_no,dept_no, from_date,
+SELECT emp_no,dept_no, from_date,to_date,
        IF(to_date = '9999-01-01', True, False) AS is_current_employee
 FROM dept_emp;
 
 
-SELECT emp_no,dept_no, from_date,
+SELECT emp_no,dept_no, from_date,to_date,
        CASE to_date
            WHEN '9999-01-01' THEN 1
            ELSE 0
            END AS is_current_employee
-FROM dept_emp;
+FROM dept_emp
+;
 
 #Write a query that returns all employee names (previous and current), and a new column 'alpha_group' that returns 'A-H', 'I-Q', or 'R-Z' depending on the first letter of their last name
 
@@ -54,33 +108,49 @@ SELECT first_name, last_name,
 		END AS alpha_group
 FROM employees;
 
-SELECT
-    dept_name,
-    COUNT(CASE WHEN title = 'Senior Engineer' THEN title ELSE NULL END) AS 'Senior Engineer',
-    COUNT(CASE WHEN title = 'Staff' THEN title ELSE NULL END) AS 'Staff',
-    COUNT(CASE WHEN title = 'Engineer' THEN title ELSE NULL END) AS 'Engineer',
-    COUNT(CASE WHEN title = 'Senior Staff' THEN title ELSE NULL END) AS 'Senior Staff',
-    COUNT(CASE WHEN title = 'Assistant Engineer' THEN title ELSE NULL END) AS 'Assistant Engineer',
-    COUNT(CASE WHEN title = 'Technique Leader' THEN title ELSE NULL END) AS 'Technique Leader',
-    COUNT(CASE WHEN title = 'Manager' THEN title ELSE NULL END) AS 'Manager'
-FROM departments
-JOIN dept_emp USING(dept_no)
-JOIN titles USING(emp_no)
-GROUP BY dept_name
-ORDER BY dept_name;
-
 
 
 #How many employees (current or previous) were born in each decade?
-SELECT 
-       COUNT(CASE WHEN birth_date BETWEEN '195%' AND '196%' THEN '1950s' else null 
+
+#182886 in 1950s 
+#117138 in 1960s 
+
+SELECT COUNT(*),
+		
+       CASE 
        
-       END) AS decade
-FROM employees;
+       WHEN birth_date LIKE '195%' THEN '1950s'
+       	WHEN  birth_date LIKE '196%' THEN '1960s'
+		END AS decade
+		
+FROM employees
+GROUP BY decade;
 
 
-
-SELECT * FROM employees;
-
+SELECT 
+		
+       CASE 
+       
+       WHEN birth_date LIKE '195%' THEN '1950s'
+       	WHEN  birth_date LIKE '196%' THEN '1960s'
+		END AS decade
+		
+FROM employees
+GROUP BY decade;
 
 #What is the current average salary for each of the following department groups: R&D, Sales & Marketing, Prod & QM, Finance & HR, Customer Service?
+
+SELECT
+    CASE
+        WHEN d.dept_name IN ('Research', 'Development') THEN 'R&D'
+        WHEN d.dept_name IN ('Sales', 'Marketing') THEN 'Sales & Marketing'
+        WHEN d.dept_name IN ('Production', 'Quality Management') THEN 'Prod & QM'
+        WHEN d.dept_name IN ('Finance', 'Human Resources') THEN 'Finanace & HR'
+        ELSE d.dept_name
+    END AS dept_group,
+    AVG(s.salary) AS avg_salary
+FROM departments d
+JOIN dept_emp de USING (dept_no)
+JOIN salaries s USING (emp_no)
+WHERE s.to_date > NOW() AND de.to_date > NOW()
+GROUP BY dept_group;
