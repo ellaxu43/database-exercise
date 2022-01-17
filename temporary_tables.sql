@@ -69,3 +69,36 @@ MODIFY COLUMN amount INT;
 SELECT * FROM Newamount;
 
 #Find out how the current average pay in each department compares to the overall, historical average pay. In order to make the comparison easier, you should use the Z-score for salaries. In terms of salary, what is the best department right now to work for? The worst?
+
+create temporary table historic_aggregates as (
+    select avg(salary) as avg_salary, std(salary) as std_salary
+    from employees.salaries 
+);
+
+create temporary table current_info as (
+    select dept_name, avg(salary) as department_current_average
+    from employees.salaries
+    join employees.dept_emp using(emp_no)
+    join employees.departments using(dept_no)
+    where employees.dept_emp.to_date > curdate()
+    and employees.salaries.to_date > curdate()
+    group by dept_name
+);
+
+select * from current_info;
+
+alter table current_info add historic_avg float(10,2);
+alter table current_info add historic_std float(10,2);
+alter table current_info add zscore float(10,2);
+
+update current_info set historic_avg = (select avg_salary from historic_aggregates);
+update current_info set historic_std = (select std_salary from historic_aggregates);
+
+select * from current_info;
+
+update current_info 
+set zscore = (department_current_average - historic_avg) / historic_std;
+
+select * from current_info
+order by zscore desc;
+
